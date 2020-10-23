@@ -1,0 +1,6 @@
+tqdm>=4.46.1
+allensdk
+brainio>=0.0.16
+vtkplotter
+recommonmark
+PyMCubes
