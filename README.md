@@ -124,3 +124,8 @@ To deal with transformations between your data space and `bg-atlasapi`, you migh
 If you would like to contribute to `bg-atlasapi` (or any of the downstream tools like [brainrender](https://github.com/BrancoLab/BrainRender) etc.\) please get in touch by opening a new issue or pull request on [GitHub](https://github.com/brainglobe/bg-atlasapi). 
 
 Someone might have already asked a question you might have, so if you're not sure where to start, check out the [issues](https://github.com/brainglobe/bg-atlasapi/issues) \(and the issues of the other repositories\)
+
+
+# BG-AtlasGen
+
+Utilities and scripts for the generation of cleaned-up data for the `bg-atlasapi` module can be found in the `bg_atlasgen` module.
