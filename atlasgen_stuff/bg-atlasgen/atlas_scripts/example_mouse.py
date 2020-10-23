@@ -108,8 +108,10 @@ def create_atlas(working_dir, resolution):
 
 
 if __name__ == "__main__":
-    # Generated atlas path:
-    bg_root_dir = Path.home() / "brainglobe_workingdir" / "example"
-    bg_root_dir.mkdir(exist_ok=True)
+    from argparse import ArgumentParser
 
-    # create_atlas(working_dir, 100)
+    parser = ArgumentParser(description="Generate example atlas")
+    parser.add_argument("targetdir", help="The path where the atlas will be downloaded")
+    args = parser.parse_args()
+
+    create_atlas(args.targetdir, 100)

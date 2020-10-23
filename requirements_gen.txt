@@ -4,3 +4,4 @@ brainio>=0.0.16
 vtkplotter
 recommonmark
 PyMCubes
+tables==3.5.1
