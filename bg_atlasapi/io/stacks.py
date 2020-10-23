@@ -1,5 +1,5 @@
 import tifffile
-from bg_atlasapi import descriptors
+from .. import descriptors
 
 
 def write_stack(stack, filename):

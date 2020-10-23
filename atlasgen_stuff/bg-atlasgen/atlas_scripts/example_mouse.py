@@ -8,7 +8,7 @@ from requests import exceptions
 from pathlib import Path
 from tqdm import tqdm
 
-from bg_atlasgen.wrapup import wrapup_atlas_from_data
+from bg_atlasapi.io.wrapup import wrapup_atlas_from_data
 
 
 def create_atlas(working_dir, resolution):
@@ -114,4 +114,4 @@ if __name__ == "__main__":
     parser.add_argument("targetdir", help="The path where the atlas will be downloaded")
     args = parser.parse_args()
 
-    create_atlas(args.targetdir, 100)
+    create_atlas(Path(args.targetdir), 100)

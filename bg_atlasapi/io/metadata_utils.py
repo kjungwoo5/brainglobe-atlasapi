@@ -6,13 +6,12 @@
 import re
 import json
 from datetime import datetime
-from bg_atlasapi import descriptors
-
 import requests
 from requests.exceptions import MissingSchema, InvalidURL, ConnectionError
 
-from bg_atlasgen.structure_json_to_csv import convert_structure_json_to_csv
-from bg_atlasapi.structure_tree_util import get_structures_tree
+from .structure_json_to_csv import convert_structure_json_to_csv
+from .. import descriptors
+from ..structure_tree_util import get_structures_tree
 
 
 def generate_metadata_dict(

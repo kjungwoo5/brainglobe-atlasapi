@@ -7,27 +7,26 @@ import tifffile
 import bg_space as bgs
 import meshio as mio
 
-from bg_atlasgen.metadata_utils import (
+from .metadata_utils import (
     create_metadata_files,
     generate_metadata_dict,
 )
-from bg_atlasgen.stacks import (
+from .stacks import (
     save_reference,
     save_annotation,
     save_hemispheres,
     save_secondary_reference,
 )
 
-import bg_atlasgen
-from bg_atlasgen.structures import check_struct_consistency
+from .structures import check_struct_consistency
 
-from bg_atlasapi import descriptors
-from bg_atlasapi.utils import atlas_name_from_repr
+from .. import descriptors
+from ..utils import atlas_name_from_repr
 
 
 # This should be changed every time we make changes in the atlas
 # structure:
-ATLAS_VERSION = bg_atlasgen.__version__
+ATLAS_VERSION = 1  # TODO figure out in the future versioning system
 
 
 def wrapup_atlas_from_data(
