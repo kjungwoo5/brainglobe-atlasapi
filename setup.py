@@ -6,6 +6,9 @@ with open("requirements.txt") as f:
 with open("requirements_dev.txt") as f:
     requirements_dev = f.read().splitlines()
 
+with open("requirements_gen.txt") as f:
+    requirements_gen = f.read().splitlines()
+
 with open("README.md") as f:
     long_description = f.read()
 
@@ -17,7 +20,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=requirements,
-    extras_require=dict(dev=requirements_dev),
+    extras_require=dict(dev=requirements_dev, gen=requirements_gen),
     python_requires=">=3.6",
     entry_points={"console_scripts": ["brainglobe = bg_atlasapi.cli:bg_cli"]},
     packages=find_namespace_packages(exclude=("docs", "tests*")),
