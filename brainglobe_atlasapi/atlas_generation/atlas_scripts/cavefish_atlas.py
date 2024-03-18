@@ -2,6 +2,8 @@ __version__ = "0"
 
 import dataclasses
 import json
+import csv
+import tifffile
 import multiprocessing as mp
 import time
 import tarfile
@@ -15,13 +17,13 @@ import os
 
 import numpy as np
 import pandas as pd
-from bg_atlasapi import utils
-from bg_atlasapi.structure_tree_util import get_structures_tree
+from brainglobe_atlasapi import utils
+from brainglobe_atlasapi.structure_tree_util import get_structures_tree
 from rich.progress import track
 # from skimage import io
 
-from bg_atlasgen.mesh_utils import Region, create_region_mesh
-from bg_atlasgen.wrapup import wrapup_atlas_from_data
+from brainglobe_atlasapi.atlas_generation.mesh_utils import Region, create_region_mesh
+from brainglobe_atlasapi.atlas_generation.wrapup import wrapup_atlas_from_data
 
 PARALLEL = True
 
@@ -40,7 +42,7 @@ def create_atlas (working_dir, resolution):
 
     download_dir_path = working_dir / "downloads"
     download_dir_path.mkdir(exist_ok=True)
-    atlas_path = download_dir_path / "atlas_files"
+    atlas_path = download_dir_path / "atlas_files" / "asty_atlas"
 
     # download atlas files
     utils.check_internet_connection()
@@ -48,13 +50,12 @@ def create_atlas (working_dir, resolution):
     utils.retrieve_over_http(ATLAS_FILE_URL, destination_path)
 
     # unpack the atlas download folder
-    tar = tarfile.open(destination_path)
-    tar.extractall(path=atlas_path)
-    tar.close()
+    with zipfile.ZipFile(destination_path, 'r') as zip:
+        zip.extractall(path=atlas_path)
 
     destination_path.unlink()
 
-    structures_file = atlas_path / "SPF2_25_Region_atlas_list.json"
+    structures_file = atlas_path / "SPF2_25_Region_atlas_list.csv"
     annotations_volume = atlas_path / "SPF2_regions_SP2c_1iWarp_25.tif"
     #reference_cartpt = atlas_path / "SPF2_carpt_ref.tif" #ADDITIONAL REFERENCE
     reference_file = atlas_path / "SPF2_terk_ref.tif"
