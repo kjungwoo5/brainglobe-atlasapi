@@ -42,7 +42,7 @@ def create_atlas (working_dir, resolution):
 
     download_dir_path = working_dir / "downloads"
     download_dir_path.mkdir(exist_ok=True)
-    atlas_path = download_dir_path / "atlas_files" / "asty_atlas"
+    atlas_path = download_dir_path / "atlas_files"
 
     # download atlas files
     utils.check_internet_connection()
@@ -55,11 +55,11 @@ def create_atlas (working_dir, resolution):
 
     destination_path.unlink()
 
-    structures_file = atlas_path / "SPF2_25_Region_atlas_list.csv"
-    annotations_volume = atlas_path / "SPF2_regions_SP2c_1iWarp_25.tif"
+    structures_file = atlas_path / "asty_atlas/SPF2_25_Region_atlas_list.csv"
+    annotations_volume = atlas_path / "asty_atlas/SPF2_regions_SP2c_1iWarp_25.tif"
     #reference_cartpt = atlas_path / "SPF2_carpt_ref.tif" #ADDITIONAL REFERENCE
-    reference_file = atlas_path / "SPF2_terk_ref.tif"
-    meshes_dir_path = atlas_path / "meshes"
+    reference_file = atlas_path / "asty_atlas/SPF2_terk_ref.tif"
+    meshes_dir_path = atlas_path / "asty_atlas/meshes"
     try:
         os.mkdir(meshes_dir_path)
     except:
