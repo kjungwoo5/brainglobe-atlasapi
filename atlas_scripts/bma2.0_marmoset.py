@@ -240,7 +240,7 @@ def download_resources():
             fname=NISSL_REFERENCE_FNAME,
             progressbar=True,
         )
-        
+
     if should_fetch(HIERARCHY_PATH):
         pooch.retrieve(
             url=HIERARCHY_URL,
@@ -503,9 +503,11 @@ def retrieve_additional_references():
         A dictionary mapping reference image names to their image stack data.
     """
     in_vivo_reference = np.asarray(load_any(IN_VIVO_REFERENCE_PATH))
-    myelin_reference = np.asarray(load_any(MYELIN_REFERENCE_PATH))[:,:,:,0,0]
-    nissl_reference = np.asarray(load_any(NISSL_REFERENCE_PATH))[:,:,:,0,0]
-    
+    myelin_reference = np.asarray(load_any(MYELIN_REFERENCE_PATH))[
+        :, :, :, 0, 0
+    ]
+    nissl_reference = np.asarray(load_any(NISSL_REFERENCE_PATH))[:, :, :, 0, 0]
+
     # Shift all additional references to non-negative ranges before converting to UINT16
     in_vivo_reference -= np.min(in_vivo_reference)
     in_vivo_reference = in_vivo_reference / in_vivo_reference.max()
@@ -527,7 +529,7 @@ def retrieve_additional_references():
         "myelin_reference": myelin_reference,
         "nissl_reference": nissl_reference,
     }
-    
+
     return additional_references
 
 
