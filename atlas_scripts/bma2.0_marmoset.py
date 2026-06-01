@@ -72,11 +72,6 @@ MYELIN_REFERENCE_URL = "https://ndownloader.figshare.com/files/58252168"
 NISSL_REFERENCE_URL = "https://ndownloader.figshare.com/files/58252156"
 HIERARCHY_URL = "https://dataportal.brainminds.jp/ZAViewer_BMA_2019/regionTree.json?ver=20230203"
 
-# TODO Add DWI in vivo MRI reference? It's ~7GB
-# TODO Add more details on the expected format of the additional references dictionary if necessary
-# TODO Remove unimportant regions from structures list
-
-
 REFERENCE_FNAME = "BMA2.0_avg_exvivo_T2WI.nii.gz"
 ANNOTATION_FNAME = "BMA2.0_regions_label.nii.gz"
 LABELS_FNAME = "BMA2.0_regions_list.ctbl"
@@ -245,7 +240,7 @@ def download_resources():
             fname=NISSL_REFERENCE_FNAME,
             progressbar=True,
         )
-
+        
     if should_fetch(HIERARCHY_PATH):
         pooch.retrieve(
             url=HIERARCHY_URL,
@@ -267,8 +262,11 @@ def retrieve_reference_and_annotation():
     tuple[numpy.ndarray, numpy.ndarray]
         A tuple containing the reference volume and the annotation volume.
     """
-    reference = load_any(REFERENCE_PATH)
-    reference = np.asarray(reference).astype(np.uint16)
+    reference = np.asarray(load_any(REFERENCE_PATH), dtype=np.float64)
+    reference -= np.min(reference)
+    reference = reference / np.max(reference)
+    reference = reference * 65535
+    reference = reference.astype(np.uint16)
     annotation = load_any(ANNOTATION_PATH)
     annotation_array = np.asarray(annotation)
     annotation_array = np.where(
@@ -505,17 +503,23 @@ def retrieve_additional_references():
         A dictionary mapping reference image names to their image stack data.
     """
     in_vivo_reference = np.asarray(load_any(IN_VIVO_REFERENCE_PATH))
-    myelin_reference = np.asarray(load_any(MYELIN_REFERENCE_PATH))
-    nissl_reference = np.asarray(load_any(NISSL_REFERENCE_PATH))
+    myelin_reference = np.asarray(load_any(MYELIN_REFERENCE_PATH))[:,:,:,0,0]
+    nissl_reference = np.asarray(load_any(NISSL_REFERENCE_PATH))[:,:,:,0,0]
     
     # Shift all additional references to non-negative ranges before converting to UINT16
     in_vivo_reference -= np.min(in_vivo_reference)
+    in_vivo_reference = in_vivo_reference / in_vivo_reference.max()
+    in_vivo_reference = in_vivo_reference * 65535
     in_vivo_reference = in_vivo_reference.astype(np.uint16)
     
     myelin_reference -= np.min(myelin_reference)
+    myelin_reference = myelin_reference / myelin_reference.max()
+    myelin_reference = myelin_reference * 65535
     myelin_reference = myelin_reference.astype(np.uint16)
     
     nissl_reference -= np.min(nissl_reference)
+    nissl_reference = nissl_reference / nissl_reference.max()
+    nissl_reference = nissl_reference * 65535
     nissl_reference = nissl_reference.astype(np.uint16)
 
     additional_references = {
@@ -524,7 +528,6 @@ def retrieve_additional_references():
         "nissl_reference": nissl_reference,
     }
     
-    additional_references = {}
     return additional_references
 
 
