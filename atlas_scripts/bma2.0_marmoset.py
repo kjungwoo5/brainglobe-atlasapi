@@ -374,7 +374,7 @@ def retrieve_structure_information(annotation_volume):
             # Fix weird unicode error for this region name
             if id == 570:
                 name = "Intercalated Nucleus"
-                
+
             if id not in present_ids:
                 continue
 
@@ -511,12 +511,12 @@ def retrieve_additional_references():
     in_vivo_reference = in_vivo_reference / in_vivo_reference.max()
     in_vivo_reference = in_vivo_reference * 65535
     in_vivo_reference = in_vivo_reference.astype(np.uint16)
-    
+
     myelin_reference -= np.min(myelin_reference)
     myelin_reference = myelin_reference / myelin_reference.max()
     myelin_reference = myelin_reference * 65535
     myelin_reference = myelin_reference.astype(np.uint16)
-    
+
     nissl_reference -= np.min(nissl_reference)
     nissl_reference = nissl_reference / nissl_reference.max()
     nissl_reference = nissl_reference * 65535
