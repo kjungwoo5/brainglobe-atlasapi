@@ -219,7 +219,7 @@ def download_resources():
             ANNOTATION_URL,
             path=DOWNLOAD_DIR_PATH,
             fname=ANNOTATION_FNAME,
-            known_hash=None,
+            known_hash="92a5f4a57dc47b5f3d45ec74d58d349f446cfa5e82ffa38812db4eb974962418",
             progressbar=True,
         )
 
