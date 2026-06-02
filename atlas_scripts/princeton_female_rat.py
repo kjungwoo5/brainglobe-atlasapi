@@ -57,14 +57,14 @@ RESOLUTION = 25
 # --- Script toggles (no CLI args) ---
 # If True, do not re-download files that already exist on disk.
 SKIP_DOWNLOADS_IF_PRESENT = True
-TEMPLATE_URL = "https://ndownloader.figshare.com/files/42825733"
-ANNOTATION_URL = "https://ndownloader.figshare.com/files/42825718"
+TEMPLATE_URL = "https://ndownloader.figshare.com/files/65213850"
+ANNOTATION_URL = "https://ndownloader.figshare.com/files/65214144"
 LABELS_URL = "https://www.nitrc.org/frs/download.php/13400/MBAT_WHS_SD_rat_atlas_v4.01.zip//?i_agree=1&download_now=1"
 
 BG_ROOT_DIR = Path.home() / "brainglobe_workingdir" / ATLAS_NAME
 DOWNLOAD_DIR_PATH = BG_ROOT_DIR / "downloads"
 
-TEMPLATE_FNAME = "fPRA.tif"
+TEMPLATE_FNAME = "fPRA_background-adjusted.tif"
 ANNOTATION_FNAME = "fPRA_WHS_v4_anns.tif"
 LABELS_FNAME = "WHS_SD_rat_atlas_v4.01_labels.ilf"
 
@@ -208,7 +208,7 @@ def download_resources():
             TEMPLATE_URL,
             path=DOWNLOAD_DIR_PATH,
             fname=TEMPLATE_FNAME,
-            known_hash="b03dc1cc1406e711ac99c409fa7cfbc735c5cd5d4e094e731d25b664c50cb3d8",
+            known_hash="1bd7a1cd5f9f9397536163f1176dcd38f3193a1c57e6ed9facea48d06fb73a19",
             progressbar=True,
         )
     if should_fetch(annotation_path):
@@ -216,7 +216,7 @@ def download_resources():
             ANNOTATION_URL,
             path=DOWNLOAD_DIR_PATH,
             fname=ANNOTATION_FNAME,
-            known_hash="e7ccb0f83d59a53417a92a55a2a7c8e304f4743c469ad9ab7baf188f49598644",
+            known_hash="98e602b5cc54556e6701168e93e892baed42449df5571f9e33e7133a731e96df",
             progressbar=True,
         )
 
@@ -383,9 +383,9 @@ if __name__ == "__main__":
     additional_references = retrieve_additional_references()
     hemispheres_stack = retrieve_hemisphere_map()
     structures = retrieve_structure_information(annotated_volume)
-    meshes_dict, structures_with_mesh = retrieve_or_construct_meshes(
+    '''meshes_dict, structures_with_mesh = retrieve_or_construct_meshes(
         annotated_volume, structures
-    )
+    )'''
 
     output_filename = wrapup_atlas_from_data(
         atlas_name=ATLAS_NAME,
@@ -399,7 +399,7 @@ if __name__ == "__main__":
         reference_stack=reference_volume,
         annotation_stack=annotated_volume,
         structures_list=structures_with_mesh,
-        meshes_dict=meshes_dict,
+        meshes_dict={},
         working_dir=bg_root_dir,
         hemispheres_stack=None,
         cleanup_files=False,
