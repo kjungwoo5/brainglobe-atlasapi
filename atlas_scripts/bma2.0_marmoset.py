@@ -486,7 +486,11 @@ def retrieve_or_construct_meshes(annotated_volume, structures):
         parallel=True,
         verbosity=0,
     )
-    return meshes_dict
+    
+    # Filter structures to only those with meshes
+    structures_with_mesh = [s for s in structures if s["id"] in meshes_dict]
+
+    return meshes_dict, structures_with_mesh
 
 
 def retrieve_additional_references():
@@ -555,7 +559,7 @@ if __name__ == "__main__":
     additional_references = retrieve_additional_references()
     hemispheres_stack = retrieve_hemisphere_map()
     structures = retrieve_structure_information(annotated_volume)
-    meshes_dict = retrieve_or_construct_meshes(annotated_volume, structures)
+    meshes_dict, structures_with_mesh = retrieve_or_construct_meshes(annotated_volume, structures)
 
     output_filename = wrapup_atlas_from_data(
         atlas_name=ATLAS_NAME,
@@ -568,7 +572,7 @@ if __name__ == "__main__":
         root_id=ROOT_ID,
         reference_stack=reference_volume,
         annotation_stack=annotated_volume,
-        structures_list=structures,
+        structures_list=structures_with_mesh,
         meshes_dict=meshes_dict,
         working_dir=bg_root_dir,
         hemispheres_stack=None,
