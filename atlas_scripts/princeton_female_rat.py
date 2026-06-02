@@ -383,9 +383,9 @@ if __name__ == "__main__":
     additional_references = retrieve_additional_references()
     hemispheres_stack = retrieve_hemisphere_map()
     structures = retrieve_structure_information(annotated_volume)
-    '''meshes_dict, structures_with_mesh = retrieve_or_construct_meshes(
+    """meshes_dict, structures_with_mesh = retrieve_or_construct_meshes(
         annotated_volume, structures
-    )'''
+    )"""
 
     output_filename = wrapup_atlas_from_data(
         atlas_name=ATLAS_NAME,
