@@ -6,6 +6,15 @@ filling in the required functions and metadata.
 
 from pathlib import Path
 
+import pandas as pd
+import numpy as np
+import pooch
+
+from brainglobe_utils.IO.image import load_any
+from brainglobe_atlasapi import utils
+from brainglobe_atlasapi.atlas_generation.mesh_utils import (
+    construct_meshes_from_annotation,
+)
 from brainglobe_atlasapi.atlas_generation.wrapup import wrapup_atlas_from_data
 from brainglobe_atlasapi.utils import atlas_name_from_repr
 
@@ -20,42 +29,224 @@ from brainglobe_atlasapi.utils import atlas_name_from_repr
 # version of 1.2 is 2)
 __version__ = 0
 
-# The expected format is FirstAuthor_SpeciesCommonName, e.g. kleven_rat, or
-# Institution_SpeciesCommonName, e.g. allen_mouse.
-# remember to add {ATLAS_NAME}_{RESOLUTION}um to:
-# brainglobe_atlasapi/atlas_names.py
-ATLAS_NAME = "example_mouse"
-
-# DOI of the most relevant citable document
-CITATION = None
-
-# The scientific name of the species, ie; Rattus norvegicus
-SPECIES = None
-
-# The URL for the data files
-ATLAS_LINK = None
-
-# The orientation of the **original** atlas data, in BrainGlobe convention:
-# https://brainglobe.info/documentation/setting-up/image-definition.html#orientation
+ATLAS_NAME = "duke_dev_rat"
+CITATION = "https://doi.org/10.1016/j.neuroimage.2013.01.017"
+SPECIES = "Rattus norvegicus"
+ATLAS_LINK = "https://civmvoxport.vm.duke.edu/voxbase/studyhome.php?studyid=208"
 ORIENTATION = "asr"
 
-# The id of the highest level of the atlas. This is commonly called root or
-# brain. Include some information on what to do if your atlas is not
-# hierarchical
-ROOT_ID = None
+ROOT_ID = 999
+RESOLUTION = 25
+ATLAS_PACKAGER = "Jung Woo Kim"
 
-# The resolution of your volume in microns. Details on how to format this
-# parameter for non isotropic datasets or datasets with multiple resolutions.
-RESOLUTION = None
+SKIP_DOWNLOADS_IF_PRESENT = True
 
+REFERENCE_URL = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22891"
+ANNOTATION_URL = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22940"
+LABELS_URL = "https://civmvoxport.vm.duke.edu/voxbase/get_attachment.php?attachmentID=402"
+
+ref00 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22945"
+ref02 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22912"
+ref04 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22909"
+ref08 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22906"
+ref12 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22903"
+ref18 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22900"
+ref24 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22897"
+ref40 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22893"
+ref80 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22891"
+
+ann00 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22916"
+ann02 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22919"
+ann04 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22920"
+ann08 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22925"
+ann12 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=23604"
+ann18 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22931"
+ann24 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22934"
+ann40 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22937"
+ann80 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22940"
+
+
+BG_ROOT_DIR = Path.home() / "brainglobe_workingdir" / ATLAS_NAME
+DOWNLOAD_DIR_PATH = BG_ROOT_DIR / "downloads"
+
+TIMEPOINTS = ["00", "02", "04", "08", "12", "18", "24", "40", "80"]
+
+REFERENCE_FNAMES = {age: "p" + age + "_average_gre.nii" for age in TIMEPOINTS}
+ANNOTATION_FNAMES = {age: "pnd" + age + "_average_labels.nii" for age in TIMEPOINTS}
+LABELS_FNAME = "Developmental_labels_lookup.txt"
+
+def pooch_init(download_dir_path: Path, timepoints: list[str]) -> pooch.Pooch:
+    """Initialize Pooch for downloading atlas data.
+
+    Parameters
+    ----------
+    download_dir_path : Path
+        Path to the directory where data will be downloaded.
+    timepoints : list[str]
+        List of timepoints for which data archives are expected.
+
+    Returns
+    -------
+    pooch.Pooch
+        Initialized Pooch instance.
+    """
+    utils.check_internet_connection()
+    
+    keys = list(REFERENCE_FNAMES.values()) + list(ANNOTATION_FNAMES.values()) + [LABELS_FNAME]
+    empty_registry = {key: None for key in keys}
+    
+    p = pooch.create(
+        path=download_dir_path,
+        base_url="",
+        registry=empty_registry,
+    )
+    p.load_registry(Path(__file__).parent / "hashes" / (ATLAS_NAME + ".txt"))
+    return p
+
+def fetch_animal(pooch_: pooch.Pooch, age: str):
+    """Fetch annotation and reference volumes for a specific age.
+
+    Parameters
+    ----------
+    pooch_ : pooch.Pooch
+        The initialized Pooch instance.
+    age : str
+        The age timepoint (e.g., "00", "24").
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - annotations (np.ndarray): The annotation volume.
+        - reference (np.ndarray): The reference volume (scaled to uint16).
+
+    Raises
+    ------
+    AssertionError
+        If an unknown age timepoint is provided.
+    """
+    assert age in TIMEPOINTS, f"Unknown age timepoint: '{age}'"
+    
+    fetched_reference = pooch_.fetch(
+        REFERENCE_FNAMES[age],
+        progressbar=True,
+    )
+    
+    fetched_annotation = pooch_.fetch(
+        ANNOTATION_FNAMES[age], 
+        progressbar=True,
+    )
+    
+    reference = load_any(fetched_reference, as_numpy = True)
+    annotations = load_any(fetched_annotation, as_numpy = True)
+    '''dmin = np.min(reference)
+    dmax = np.max(reference)
+    drange = dmax - dmin
+    dscale = (2**16 - 1) / drange
+    reference = (reference - dmin) * dscale
+    reference = reference.astype(np.uint16)'''
+    return annotations, reference
+
+def fetch_ontology(pooch_: pooch.Pooch):
+    """Fetch and parse the ontology (structure tree) from an Excel file.
+
+    Parameters
+    ----------
+    pooch_ : pooch.Pooch
+        The initialized Pooch instance.
+
+    Returns
+    -------
+    list
+        A list of dictionaries, where each dictionary represents a brain
+        structure with its properties (id, acronym, name, path, RGB color).
+    """
+    devccfv1_path = pooch_.fetch(
+        "DevCCFv1_OntologyStructure.xlsx", progressbar=True
+    )
+    xl = pd.ExcelFile(devccfv1_path)
+    # xl.sheet_names # it has two excel sheets
+    # 'DevCCFv1_Ontology', 'README'
+    df = xl.parse("DevCCFv1_Ontology", header=1)
+    df = df[["Acronym", "ID16", "Name", "Structure ID Path16", "R", "G", "B"]]
+    df.rename(
+        columns={
+            "Acronym": "acronym",
+            "ID16": "id",
+            "Name": "name",
+            "Structure ID Path16": "structure_id_path",
+            "R": "r",
+            "G": "g",
+            "B": "b",
+        },
+        inplace=True,
+    )
+    structures = list(df.to_dict(orient="index").values())
+    for structure in structures:
+        if structure["acronym"] == "mouse":
+            structure["acronym"] = "root"
+        structure_path = structure["structure_id_path"]
+        structure["structure_id_path"] = [
+            int(id) for id in structure_path.strip("/").split("/")
+        ]
+        structure["rgb_triplet"] = [
+            structure["r"],
+            structure["g"],
+            structure["b"],
+        ]
+        del structure["r"]
+        del structure["g"]
+        del structure["b"]
+    return structures
 
 def download_resources():
-    """
-    Download the necessary resources for the atlas.
+    
+    BG_ROOT_DIR.mkdir(exist_ok=True, parents=True)
+    DOWNLOAD_DIR_PATH.mkdir(exist_ok=True)
 
-    If possible, please use the Pooch library to retrieve any resources.
-    """
-    pass
+    reference_path = DOWNLOAD_DIR_PATH / REFERENCE_FNAME
+    annotation_path = DOWNLOAD_DIR_PATH / ANNOTATION_FNAME
+    labels_path = DOWNLOAD_DIR_PATH / LABELS_FNAME
+
+    needs_download = (
+        (not reference_path.exists())
+        or (not annotation_path.exists())
+        or (not labels_path.exists())
+    )
+    if needs_download:
+        utils.check_internet_connection()
+
+    def should_fetch(path: Path) -> bool:
+        if not path.exists():
+            return True
+        return not SKIP_DOWNLOADS_IF_PRESENT
+
+    if should_fetch(reference_path):
+        pooch.retrieve(
+            url=REFERENCE_URL,
+            known_hash=None,
+            path=DOWNLOAD_DIR_PATH,
+            fname=REFERENCE_FNAME,
+            progressbar=True,
+        )
+
+    if should_fetch(annotation_path):
+        pooch.retrieve(
+            url=ANNOTATION_URL,
+            known_hash=None,
+            path=DOWNLOAD_DIR_PATH,
+            fname=ANNOTATION_FNAME,
+            progressbar=True,
+        )
+
+    if should_fetch(labels_path):
+        pooch.retrieve(
+            url=LABELS_URL,
+            known_hash=None,
+            path=DOWNLOAD_DIR_PATH,
+            fname=LABELS_FNAME,
+            progressbar=True,
+        )
 
 
 def retrieve_reference_and_annotation():
@@ -178,7 +369,7 @@ if __name__ == "__main__":
     structures = retrieve_structure_information()
     meshes_dict = retrieve_or_construct_meshes()
 
-    output_filename = wrapup_atlas_from_data(
+    '''output_filename = wrapup_atlas_from_data(
         atlas_name=ATLAS_NAME,
         atlas_minor_version=__version__,
         citation=CITATION,
@@ -197,4 +388,4 @@ if __name__ == "__main__":
         compress=True,
         scale_meshes=True,
         additional_references=additional_references,
-    )
+    )'''
