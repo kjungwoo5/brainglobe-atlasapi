@@ -4,11 +4,9 @@ Use this script as a starting point to package a new BrainGlobe atlas by
 filling in the required functions and metadata.
 """
 
+import re
 from pathlib import Path
 
-import pandas as pd
-import numpy as np
-import re
 import pooch
 from brainglobe_utils.IO.image import load_any
 
@@ -206,9 +204,6 @@ def fetch_animal(pooch_: pooch.Pooch, age: str):
     AssertionError
         If an unknown age timepoint is provided.
     """
-    
-
-    
     assert age in TIMEPOINTS, f"Unknown age timepoint: '{age}'"
 
     BG_ROOT_DIR.mkdir(exist_ok=True, parents=True)
@@ -217,10 +212,9 @@ def fetch_animal(pooch_: pooch.Pooch, age: str):
     reference_path = DOWNLOAD_DIR_PATH / REFERENCE_FNAMES[age]
     annotation_path = DOWNLOAD_DIR_PATH / ANNOTATION_FNAMES[age]
     labels_path = DOWNLOAD_DIR_PATH / LABELS_FNAME
-    
-    needs_download = (
-        (not reference_path.exists())
-        or (not annotation_path.exists())
+
+    needs_download = (not reference_path.exists()) or (
+        not annotation_path.exists()
     )
     if needs_download:
         utils.check_internet_connection()
@@ -247,7 +241,7 @@ def fetch_animal(pooch_: pooch.Pooch, age: str):
 
 
 def fetch_ontology(pooch_: pooch.Pooch):
-    """Fetch and parse the ontology (structure tree) from the labels file, 
+    """Fetch and parse the ontology (structure tree) from the labels file,
     and return a list of dictionaries, where each dictionary represents a
     structure and contains its ID, name, acronym, hierarchical path,
     and RGB triplet.
@@ -263,40 +257,34 @@ def fetch_ontology(pooch_: pooch.Pooch):
         A list of dictionaries, where each dictionary represents a brain
         structure with its properties (id, acronym, name, structure_id_path, RGB color).
     """
-
-    
     BG_ROOT_DIR.mkdir(exist_ok=True, parents=True)
     DOWNLOAD_DIR_PATH.mkdir(exist_ok=True)
-    
+
     labels_path = DOWNLOAD_DIR_PATH / LABELS_FNAME
 
     needs_download = not labels_path.exists()
     if needs_download:
         utils.check_internet_connection()
-    
-    labels_path = pooch_.fetch(
-        LABELS_FNAME, progressbar=True
-    )
-    
+
+    labels_path = pooch_.fetch(LABELS_FNAME, progressbar=True)
+
     # .txt label file format:
     # Index Name R G B A
 
     # Use regex parsing for consistency
-    line_re = re.compile(
-        r"^(\d+)\s+(\S+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*$"
-    )
+    line_re = re.compile(r"^(\d+)\s+(\S+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*$")
 
     # Use the name and acronym used within the label files,
     # and then change them back to "root" later
     structures = [
-            {
+        {
             "id": ROOT_ID,
             "name": "root",
             "acronym": "root",
             "structure_id_path": [ROOT_ID],
             "rgb_triplet": [255, 255, 255],
-            }
-        ]
+        }
+    ]
 
     # Open BMA2.0 regions list file to get structure information
     with open(labels_path, "r") as f:
@@ -318,15 +306,14 @@ def fetch_ontology(pooch_: pooch.Pooch):
 
             structures.append(
                 {
-                "id": id,
-                "name": name,
-                "acronym": ACRONYMS.get(name, None),
-                "structure_id_path": [ROOT_ID, id],
-                "rgb_triplet": rgb_colour,
+                    "id": id,
+                    "name": name,
+                    "acronym": ACRONYMS.get(name, None),
+                    "structure_id_path": [ROOT_ID, id],
+                    "rgb_triplet": rgb_colour,
                 }
             )
-    
-    
+
     structures.sort(key=lambda s: (len(s["structure_id_path"]), s["id"]))
     return structures
 
@@ -381,7 +368,7 @@ def retrieve_or_construct_meshes(annotated_volume, structures):
 if __name__ == "__main__":
     if RESOLUTION is None:
         raise ValueError("RESOLUTION must be set before running this script.")
-    
+
     bg_root_dir = Path.home() / "brainglobe_workingdir" / ATLAS_NAME
     bg_root_dir.mkdir(parents=True, exist_ok=True)
 
@@ -398,7 +385,9 @@ if __name__ == "__main__":
     for age in TIMEPOINTS:
         reference_volume, annotated_volume = fetch_animal(good_dog, age)
         hemispheres_stack = retrieve_hemisphere_map()
-        meshes_dict = retrieve_or_construct_meshes(annotated_volume, structures)
+        meshes_dict = retrieve_or_construct_meshes(
+            annotated_volume, structures
+        )
 
         """output_filename = wrapup_atlas_from_data(
             atlas_name=ATLAS_NAME,
