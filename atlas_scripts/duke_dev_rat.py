@@ -7,10 +7,15 @@ filling in the required functions and metadata.
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
+import re
 import pooch
 from brainglobe_utils.IO.image import load_any
 
 from brainglobe_atlasapi import utils
+from brainglobe_atlasapi.atlas_generation.mesh_utils import (
+    construct_meshes_from_annotation,
+)
 from brainglobe_atlasapi.utils import atlas_name_from_repr
 
 # Copy-paste this script into a new file and fill in the functions to package
@@ -114,6 +119,37 @@ ANNOTATION_FNAMES = {
 }
 LABELS_FNAME = "Developmental_labels_lookup.txt"
 
+ACRONYMS = {
+    "Exterior": None,
+    "Cingulum": None,
+    "Mesencephalon": None,
+    "Substantia Nigra": None,
+    "Anterior commisure": None,
+    "Axial Hindbrain": None,
+    "Septum": None,
+    "Diagonal Domain": None,
+    "Hypothalamus": None,
+    "Striatum": None,
+    "Diencephalon": None,
+    "Internal Capsule": None,
+    "Hippocampal Formation": None,
+    "Pallidum": None,
+    "Accumbens nucleus": None,
+    "Fimbria": None,
+    "Corpus Callosum": None,
+    "Amygdala": None,
+    "Preoptic Area": None,
+    "Isocortex": None,
+    "Cerebellum": None,
+    "Olfactory Structures": None,
+    "Bed nucleus of the Stria Terminalis": None,
+    "Pituitary": None,
+    "Ventricles": None,
+    "Optic Pathways": None,
+    "Pineal Gland": None,
+    "Spinal Cord": None,
+}
+
 
 def pooch_init(download_dir_path: Path, timepoints: list[str]) -> pooch.Pooch:
     """Initialize Pooch for downloading atlas data.
@@ -170,7 +206,24 @@ def fetch_animal(pooch_: pooch.Pooch, age: str):
     AssertionError
         If an unknown age timepoint is provided.
     """
+    
+
+    
     assert age in TIMEPOINTS, f"Unknown age timepoint: '{age}'"
+
+    BG_ROOT_DIR.mkdir(exist_ok=True, parents=True)
+    DOWNLOAD_DIR_PATH.mkdir(exist_ok=True)
+
+    reference_path = DOWNLOAD_DIR_PATH / REFERENCE_FNAMES[age]
+    annotation_path = DOWNLOAD_DIR_PATH / ANNOTATION_FNAMES[age]
+    labels_path = DOWNLOAD_DIR_PATH / LABELS_FNAME
+    
+    needs_download = (
+        (not reference_path.exists())
+        or (not annotation_path.exists())
+    )
+    if needs_download:
+        utils.check_internet_connection()
 
     fetched_reference = pooch_.fetch(
         REFERENCE_FNAMES[age],
@@ -182,19 +235,22 @@ def fetch_animal(pooch_: pooch.Pooch, age: str):
         progressbar=True,
     )
 
-    reference = load_any(fetched_reference, as_numpy=True)
-    annotations = load_any(fetched_annotation, as_numpy=True)
+    reference_volume = load_any(fetched_reference, as_numpy=True)
+    annotation_volume = load_any(fetched_annotation, as_numpy=True)
     """dmin = np.min(reference)
     dmax = np.max(reference)
     drange = dmax - dmin
     dscale = (2**16 - 1) / drange
     reference = (reference - dmin) * dscale
     reference = reference.astype(np.uint16)"""
-    return annotations, reference
+    return reference_volume, annotation_volume
 
 
 def fetch_ontology(pooch_: pooch.Pooch):
-    """Fetch and parse the ontology (structure tree) from an Excel file.
+    """Fetch and parse the ontology (structure tree) from the labels file, 
+    and return a list of dictionaries, where each dictionary represents a
+    structure and contains its ID, name, acronym, hierarchical path,
+    and RGB triplet.
 
     Parameters
     ----------
@@ -205,111 +261,74 @@ def fetch_ontology(pooch_: pooch.Pooch):
     -------
     list
         A list of dictionaries, where each dictionary represents a brain
-        structure with its properties (id, acronym, name, path, RGB color).
+        structure with its properties (id, acronym, name, structure_id_path, RGB color).
     """
-    devccfv1_path = pooch_.fetch(
-        "DevCCFv1_OntologyStructure.xlsx", progressbar=True
-    )
-    xl = pd.ExcelFile(devccfv1_path)
-    # xl.sheet_names # it has two excel sheets
-    # 'DevCCFv1_Ontology', 'README'
-    df = xl.parse("DevCCFv1_Ontology", header=1)
-    df = df[["Acronym", "ID16", "Name", "Structure ID Path16", "R", "G", "B"]]
-    df.rename(
-        columns={
-            "Acronym": "acronym",
-            "ID16": "id",
-            "Name": "name",
-            "Structure ID Path16": "structure_id_path",
-            "R": "r",
-            "G": "g",
-            "B": "b",
-        },
-        inplace=True,
-    )
-    structures = list(df.to_dict(orient="index").values())
-    for structure in structures:
-        if structure["acronym"] == "mouse":
-            structure["acronym"] = "root"
-        structure_path = structure["structure_id_path"]
-        structure["structure_id_path"] = [
-            int(id) for id in structure_path.strip("/").split("/")
-        ]
-        structure["rgb_triplet"] = [
-            structure["r"],
-            structure["g"],
-            structure["b"],
-        ]
-        del structure["r"]
-        del structure["g"]
-        del structure["b"]
-    return structures
 
-
-def download_resources():
-
+    
     BG_ROOT_DIR.mkdir(exist_ok=True, parents=True)
     DOWNLOAD_DIR_PATH.mkdir(exist_ok=True)
-
-    reference_path = DOWNLOAD_DIR_PATH / REFERENCE_FNAME
-    annotation_path = DOWNLOAD_DIR_PATH / ANNOTATION_FNAME
+    
     labels_path = DOWNLOAD_DIR_PATH / LABELS_FNAME
 
-    needs_download = (
-        (not reference_path.exists())
-        or (not annotation_path.exists())
-        or (not labels_path.exists())
-    )
+    needs_download = not labels_path.exists()
     if needs_download:
         utils.check_internet_connection()
+    
+    labels_path = pooch_.fetch(
+        LABELS_FNAME, progressbar=True
+    )
+    
+    # .txt label file format:
+    # Index Name R G B A
 
-    def should_fetch(path: Path) -> bool:
-        if not path.exists():
-            return True
-        return not SKIP_DOWNLOADS_IF_PRESENT
+    # Use regex parsing for consistency
+    line_re = re.compile(
+        r"^(\d+)\s+(\S+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*$"
+    )
 
-    if should_fetch(reference_path):
-        pooch.retrieve(
-            url=REFERENCE_URL,
-            known_hash=None,
-            path=DOWNLOAD_DIR_PATH,
-            fname=REFERENCE_FNAME,
-            progressbar=True,
-        )
+    # Use the name and acronym used within the label files,
+    # and then change them back to "root" later
+    structures = [
+            {
+            "id": ROOT_ID,
+            "name": "root",
+            "acronym": "root",
+            "structure_id_path": [ROOT_ID],
+            "rgb_triplet": [255, 255, 255],
+            }
+        ]
 
-    if should_fetch(annotation_path):
-        pooch.retrieve(
-            url=ANNOTATION_URL,
-            known_hash=None,
-            path=DOWNLOAD_DIR_PATH,
-            fname=ANNOTATION_FNAME,
-            progressbar=True,
-        )
+    # Open BMA2.0 regions list file to get structure information
+    with open(labels_path, "r") as f:
+        labels_data = f.read().splitlines()
+        for key, label in enumerate(labels_data):
+            if not label.strip() or label.lstrip().startswith("#"):
+                continue
+            m = line_re.match(label)
 
-    if should_fetch(labels_path):
-        pooch.retrieve(
-            url=LABELS_URL,
-            known_hash=None,
-            path=DOWNLOAD_DIR_PATH,
-            fname=LABELS_FNAME,
-            progressbar=True,
-        )
+            # Skip malformed lines
+            if not m:
+                continue
 
+            # Skip background, root and hemisphere specific labels
+            id = int(m.group(1))
+            name = m.group(2).replace("_", " ")
 
-def retrieve_reference_and_annotation():
-    """
-    Retrieve the reference and annotation volumes.
+            rgb_colour = [int(m.group(3)), int(m.group(4)), int(m.group(5))]
 
-    If possible, use brainglobe_utils.IO.image.load_any for opening images.
-
-    Returns
-    -------
-    tuple[numpy.ndarray, numpy.ndarray]
-        A tuple containing the reference volume and the annotation volume.
-    """
-    reference = None
-    annotation = None
-    return reference, annotation
+            structures.append(
+                {
+                "id": id,
+                "name": name,
+                "acronym": ACRONYMS.get(name, None),
+                "structure_id_path": [ROOT_ID, id],
+                "rgb_triplet": rgb_colour,
+                }
+            )
+    
+    
+    structures.sort(key=lambda s: (len(s["structure_id_path"]), s["id"]))
+    return structures
 
 
 def retrieve_hemisphere_map():
@@ -329,36 +348,7 @@ def retrieve_hemisphere_map():
     return None
 
 
-def retrieve_structure_information():
-    """
-    Return a list of dictionaries with information about the atlas.
-
-    Returns a list of dictionaries, where each dictionary represents a
-    structure and contains its ID, name, acronym, hierarchical path,
-    and RGB triplet.
-
-    The expected format for each dictionary is:
-
-    .. code-block:: python
-
-        {
-            "id": int,
-            "name": str,
-            "acronym": str,
-            "structure_id_path": list[int],
-            "rgb_triplet": list[int, int, int],
-        }
-
-    Returns
-    -------
-    list[dict]
-        A list of dictionaries, each containing information for a single
-        atlas structure.
-    """
-    return None
-
-
-def retrieve_or_construct_meshes():
+def retrieve_or_construct_meshes(annotated_volume, structures):
     """
     Return a dictionary mapping structure IDs to paths of mesh files.
 
@@ -371,33 +361,27 @@ def retrieve_or_construct_meshes():
         A dictionary where keys are structure IDs and values are paths to the
         corresponding mesh files.
     """
-    meshes_dict = {}
-    return meshes_dict
+    meshes_dict = construct_meshes_from_annotation(
+        save_path=DOWNLOAD_DIR_PATH,
+        volume=annotated_volume,
+        structures_list=structures,
+        closing_n_iters=2,
+        decimate_fraction=0.2,
+        smooth=False,
+        parallel=True,
+        verbosity=0,
+        num_threads=-1,
+    )
+
+    structures_with_mesh = [s for s in structures if s["id"] in meshes_dict]
+
+    return meshes_dict, structures_with_mesh
 
 
-def retrieve_additional_references():
-    """
-    Return a dictionary of additional reference images.
-
-    This function should be edited only if the atlas includes additional
-    reference images. The dictionary should map the name of each additional
-    reference image to its corresponding image stack data.
-
-    Returns
-    -------
-    dict
-        A dictionary mapping reference image names to their image stack data.
-    """
-    additional_references = {}
-    return additional_references
-
-
-### If the code above this line has been filled correctly, nothing needs to be
-### edited below (unless variables need to be passed between the functions).
 if __name__ == "__main__":
     if RESOLUTION is None:
         raise ValueError("RESOLUTION must be set before running this script.")
-
+    
     bg_root_dir = Path.home() / "brainglobe_workingdir" / ATLAS_NAME
     bg_root_dir.mkdir(parents=True, exist_ok=True)
 
@@ -409,30 +393,31 @@ if __name__ == "__main__":
         raise FileExistsError(
             f"Atlas output already exists in {bg_root_dir}. "
         )
-    download_resources()
-    reference_volume, annotated_volume = retrieve_reference_and_annotation()
-    additional_references = retrieve_additional_references()
-    hemispheres_stack = retrieve_hemisphere_map()
-    structures = retrieve_structure_information()
-    meshes_dict = retrieve_or_construct_meshes()
+    good_dog = pooch_init(DOWNLOAD_DIR_PATH, TIMEPOINTS)
+    structures = fetch_ontology(good_dog)
+    for age in TIMEPOINTS:
+        reference_volume, annotated_volume = fetch_animal(good_dog, age)
+        hemispheres_stack = retrieve_hemisphere_map()
+        meshes_dict = retrieve_or_construct_meshes(annotated_volume, structures)
 
-    """output_filename = wrapup_atlas_from_data(
-        atlas_name=ATLAS_NAME,
-        atlas_minor_version=__version__,
-        citation=CITATION,
-        atlas_link=ATLAS_LINK,
-        species=SPECIES,
-        resolution=(RESOLUTION,) * 3,
-        orientation=ORIENTATION,
-        root_id=ROOT_ID,
-        reference_stack=reference_volume,
-        annotation_stack=annotated_volume,
-        structures_list=structures,
-        meshes_dict=meshes_dict,
-        working_dir=bg_root_dir,
-        hemispheres_stack=None,
-        cleanup_files=False,
-        compress=True,
-        scale_meshes=True,
-        additional_references=additional_references,
-    )"""
+        """output_filename = wrapup_atlas_from_data(
+            atlas_name=ATLAS_NAME,
+            atlas_minor_version=__version__,
+            citation=CITATION,
+            atlas_link=ATLAS_LINK,
+            species=SPECIES,
+            resolution=(RESOLUTION,) * 3,
+            orientation=ORIENTATION,
+            root_id=ROOT_ID,
+            reference_stack=reference_volume,
+            annotation_stack=annotated_volume,
+            structures_list=structures,
+            meshes_dict=meshes_dict,
+            working_dir=bg_root_dir,
+            hemispheres_stack=None,
+            cleanup_files=False,
+            compress=True,
+            scale_meshes=True,
+            additional_references=additional_references,
+            atlas_packager=ATLAS_PACKAGER
+        )"""
