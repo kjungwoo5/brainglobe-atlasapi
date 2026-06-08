@@ -7,15 +7,10 @@ filling in the required functions and metadata.
 from pathlib import Path
 
 import pandas as pd
-import numpy as np
 import pooch
-
 from brainglobe_utils.IO.image import load_any
+
 from brainglobe_atlasapi import utils
-from brainglobe_atlasapi.atlas_generation.mesh_utils import (
-    construct_meshes_from_annotation,
-)
-from brainglobe_atlasapi.atlas_generation.wrapup import wrapup_atlas_from_data
 from brainglobe_atlasapi.utils import atlas_name_from_repr
 
 # Copy-paste this script into a new file and fill in the functions to package
@@ -32,7 +27,9 @@ __version__ = 0
 ATLAS_NAME = "duke_dev_rat"
 CITATION = "https://doi.org/10.1016/j.neuroimage.2013.01.017"
 SPECIES = "Rattus norvegicus"
-ATLAS_LINK = "https://civmvoxport.vm.duke.edu/voxbase/studyhome.php?studyid=208"
+ATLAS_LINK = (
+    "https://civmvoxport.vm.duke.edu/voxbase/studyhome.php?studyid=208"
+)
 ORIENTATION = "asr"
 
 ROOT_ID = 999
@@ -41,29 +38,69 @@ ATLAS_PACKAGER = "Jung Woo Kim"
 
 SKIP_DOWNLOADS_IF_PRESENT = True
 
-REFERENCE_URL = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22891"
-ANNOTATION_URL = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22940"
+REFERENCE_URL = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22891"
+)
+ANNOTATION_URL = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22940"
+)
 LABELS_URL = "https://civmvoxport.vm.duke.edu/voxbase/get_attachment.php?attachmentID=402"
 
-ref00 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22945"
-ref02 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22912"
-ref04 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22909"
-ref08 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22906"
-ref12 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22903"
-ref18 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22900"
-ref24 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22897"
-ref40 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22893"
-ref80 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22891"
+ref00 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22945"
+)
+ref02 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22912"
+)
+ref04 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22909"
+)
+ref08 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22906"
+)
+ref12 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22903"
+)
+ref18 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22900"
+)
+ref24 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22897"
+)
+ref40 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22893"
+)
+ref80 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22891"
+)
 
-ann00 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22916"
-ann02 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22919"
-ann04 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22920"
-ann08 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22925"
-ann12 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=23604"
-ann18 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22931"
-ann24 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22934"
-ann40 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22937"
-ann80 = "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22940"
+ann00 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22916"
+)
+ann02 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22919"
+)
+ann04 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22920"
+)
+ann08 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22925"
+)
+ann12 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=23604"
+)
+ann18 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22931"
+)
+ann24 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22934"
+)
+ann40 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22937"
+)
+ann80 = (
+    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22940"
+)
 
 
 BG_ROOT_DIR = Path.home() / "brainglobe_workingdir" / ATLAS_NAME
@@ -72,8 +109,11 @@ DOWNLOAD_DIR_PATH = BG_ROOT_DIR / "downloads"
 TIMEPOINTS = ["00", "02", "04", "08", "12", "18", "24", "40", "80"]
 
 REFERENCE_FNAMES = {age: "p" + age + "_average_gre.nii" for age in TIMEPOINTS}
-ANNOTATION_FNAMES = {age: "pnd" + age + "_average_labels.nii" for age in TIMEPOINTS}
+ANNOTATION_FNAMES = {
+    age: "pnd" + age + "_average_labels.nii" for age in TIMEPOINTS
+}
 LABELS_FNAME = "Developmental_labels_lookup.txt"
+
 
 def pooch_init(download_dir_path: Path, timepoints: list[str]) -> pooch.Pooch:
     """Initialize Pooch for downloading atlas data.
@@ -91,10 +131,14 @@ def pooch_init(download_dir_path: Path, timepoints: list[str]) -> pooch.Pooch:
         Initialized Pooch instance.
     """
     utils.check_internet_connection()
-    
-    keys = list(REFERENCE_FNAMES.values()) + list(ANNOTATION_FNAMES.values()) + [LABELS_FNAME]
+
+    keys = (
+        list(REFERENCE_FNAMES.values())
+        + list(ANNOTATION_FNAMES.values())
+        + [LABELS_FNAME]
+    )
     empty_registry = {key: None for key in keys}
-    
+
     p = pooch.create(
         path=download_dir_path,
         base_url="",
@@ -102,6 +146,7 @@ def pooch_init(download_dir_path: Path, timepoints: list[str]) -> pooch.Pooch:
     )
     p.load_registry(Path(__file__).parent / "hashes" / (ATLAS_NAME + ".txt"))
     return p
+
 
 def fetch_animal(pooch_: pooch.Pooch, age: str):
     """Fetch annotation and reference volumes for a specific age.
@@ -126,26 +171,27 @@ def fetch_animal(pooch_: pooch.Pooch, age: str):
         If an unknown age timepoint is provided.
     """
     assert age in TIMEPOINTS, f"Unknown age timepoint: '{age}'"
-    
+
     fetched_reference = pooch_.fetch(
         REFERENCE_FNAMES[age],
         progressbar=True,
     )
-    
+
     fetched_annotation = pooch_.fetch(
-        ANNOTATION_FNAMES[age], 
+        ANNOTATION_FNAMES[age],
         progressbar=True,
     )
-    
-    reference = load_any(fetched_reference, as_numpy = True)
-    annotations = load_any(fetched_annotation, as_numpy = True)
-    '''dmin = np.min(reference)
+
+    reference = load_any(fetched_reference, as_numpy=True)
+    annotations = load_any(fetched_annotation, as_numpy=True)
+    """dmin = np.min(reference)
     dmax = np.max(reference)
     drange = dmax - dmin
     dscale = (2**16 - 1) / drange
     reference = (reference - dmin) * dscale
-    reference = reference.astype(np.uint16)'''
+    reference = reference.astype(np.uint16)"""
     return annotations, reference
+
 
 def fetch_ontology(pooch_: pooch.Pooch):
     """Fetch and parse the ontology (structure tree) from an Excel file.
@@ -199,8 +245,9 @@ def fetch_ontology(pooch_: pooch.Pooch):
         del structure["b"]
     return structures
 
+
 def download_resources():
-    
+
     BG_ROOT_DIR.mkdir(exist_ok=True, parents=True)
     DOWNLOAD_DIR_PATH.mkdir(exist_ok=True)
 
@@ -369,7 +416,7 @@ if __name__ == "__main__":
     structures = retrieve_structure_information()
     meshes_dict = retrieve_or_construct_meshes()
 
-    '''output_filename = wrapup_atlas_from_data(
+    """output_filename = wrapup_atlas_from_data(
         atlas_name=ATLAS_NAME,
         atlas_minor_version=__version__,
         citation=CITATION,
@@ -388,4 +435,4 @@ if __name__ == "__main__":
         compress=True,
         scale_meshes=True,
         additional_references=additional_references,
-    )'''
+    )"""
