@@ -260,7 +260,7 @@ def retrieve_hemisphere_map(reference_volume):
     hemispheres_map = np.full(reference_volume.shape, 2, dtype=int)
     for anterioposterior_distance in range(hemispheres_map.shape[1]):
         hemispheres_map[
-            int(anterioposterior_distance * -0.04608 + 352.9) : ,
+            int(anterioposterior_distance * -0.04608 + 352.9) :,
             anterioposterior_distance,
         ] = 1
 
