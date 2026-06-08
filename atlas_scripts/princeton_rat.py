@@ -254,10 +254,10 @@ def retrieve_hemisphere_map(reference_volume):
         A numpy array representing the hemisphere map, or None if the atlas
         is symmetrical.
     """
-    hemispheres_map = np.full(reference_volume.shape, 0, dtype=np.uint8)
+    hemispheres_map = np.full(reference_volume.shape, 2, dtype=int)
     for anterioposterior_distance in range(hemispheres_map.shape[1]):
         hemispheres_map[
-            : int(anterioposterior_distance * -0.04608 + 352.9),
+            int(anterioposterior_distance * -0.04608 + 352.9) : ,
             anterioposterior_distance,
         ] = 1
 
@@ -393,7 +393,6 @@ if __name__ == "__main__":
     meshes_dict, structures_with_mesh = retrieve_or_construct_meshes(
         annotated_volume, structures
     )
-
     output_filename = wrapup_atlas_from_data(
         atlas_name=ATLAS_NAME,
         atlas_minor_version=__version__,

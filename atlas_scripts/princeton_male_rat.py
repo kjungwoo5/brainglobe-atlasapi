@@ -243,7 +243,7 @@ def retrieve_reference_and_annotation():
     return reference, annotation
 
 
-def retrieve_hemisphere_map():
+def retrieve_hemisphere_map(reference_volume):
     """
     Retrieve a hemisphere map for the atlas.
 
@@ -257,7 +257,14 @@ def retrieve_hemisphere_map():
         A numpy array representing the hemisphere map, or None if the atlas
         is symmetrical.
     """
-    return None
+    hemispheres_map = np.full(reference_volume.shape, 2, dtype=int)
+    for anterioposterior_distance in range(hemispheres_map.shape[1]):
+        hemispheres_map[
+            int(anterioposterior_distance * -0.04608 + 352.9) : ,
+            anterioposterior_distance,
+        ] = 1
+
+    return hemispheres_map
 
 
 def retrieve_structure_information(annotation):
@@ -384,7 +391,7 @@ if __name__ == "__main__":
     download_resources()
     reference_volume, annotated_volume = retrieve_reference_and_annotation()
     additional_references = retrieve_additional_references()
-    hemispheres_stack = retrieve_hemisphere_map()
+    hemispheres_stack = retrieve_hemisphere_map(reference_volume)
     structures = retrieve_structure_information(annotated_volume)
     meshes_dict, structures_with_mesh = retrieve_or_construct_meshes(
         annotated_volume, structures
@@ -404,7 +411,7 @@ if __name__ == "__main__":
         structures_list=structures_with_mesh,
         meshes_dict=meshes_dict,
         working_dir=bg_root_dir,
-        hemispheres_stack=None,
+        hemispheres_stack=hemispheres_stack,
         cleanup_files=False,
         compress=True,
         scale_meshes=True,
