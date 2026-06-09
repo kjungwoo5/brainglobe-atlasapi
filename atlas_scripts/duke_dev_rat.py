@@ -54,35 +54,47 @@ ANNOTATION_FNAMES = {
 ANNOTATION_FNAMES["12"] = "pnd12_average_labels_fix.nii"
 LABELS_FNAME = "Developmental_labels_lookup.txt"
 
+# As acronyms were not provided by the authors, acronyms are either taken from 
+# George Paxinos and Charles Watson's The Rat Brain in stereotaxic coordinates 
+# or, when missing, derived from the structure name. 
 ACRONYMS = {
-    "Exterior": None,
-    "Cingulum": None,
+    # Included regions
+    "Cingulum": "cg",
     "Mesencephalon": None,
-    "Substantia Nigra": None,
-    "Anterior commisure": None,
+    "Substantia Nigra": "SN",
+    "Anterior commisure": "ac",
     "Axial Hindbrain": None,
     "Septum": None,
     "Diagonal Domain": None,
     "Hypothalamus": None,
-    "Striatum": None,
+    "Striatum": "CPu",
     "Diencephalon": None,
-    "Internal Capsule": None,
+    "Internal Capsule": "ic",
     "Hippocampal Formation": None,
     "Pallidum": None,
-    "Accumbens nucleus": None,
-    "Fimbria": None,
-    "Corpus Callosum": None,
+    "Accumbens nucleus": "Acb",
+    "Fimbria": "fi",
+    "Corpus Callosum": "cc",
     "Amygdala": None,
     "Preoptic Area": None,
     "Isocortex": None,
-    "Cerebellum": None,
+    "Cerebellum": "Cb",
     "Olfactory Structures": None,
-    "Bed nucleus of the Stria Terminalis": None,
-    "Pituitary": None,
-    "Ventricles": None,
+    "Bed nucleus of the Stria Terminalis": "BNST",
+    "Pituitary": "Pit",
+    "Ventricles": "V",
     "Optic Pathways": None,
-    "Pineal Gland": None,
+    "Pineal Gland": "Pi",
     "Spinal Cord": None,
+    
+    # Superstructures from publication
+    "Hindbrain": None, 
+    "Forebrain": None, 
+    "Telencephalon": None,
+    "Pallium": None, 
+    "Subpallium": None,
+    "Developmentally diverse structures": None, 
+    "Major white matter structures": None,
 }
 
 
@@ -239,7 +251,8 @@ def fetch_ontology(pooch_: pooch.Pooch):
             # Skip background, root and hemisphere specific labels
             id = int(m.group(1))
             name = m.group(2).replace("_", " ")
-
+            if id == 0:
+                continue
             rgb_colour = [int(m.group(3)), int(m.group(4)), int(m.group(5))]
 
             structures.append(
