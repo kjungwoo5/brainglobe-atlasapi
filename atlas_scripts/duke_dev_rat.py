@@ -143,8 +143,8 @@ def fetch_animal(pooch_: pooch.Pooch, age: str):
     dmax = np.max(reference_volume)
     drange = dmax - dmin
     dscale = (2**16 - 1) / drange
-    reference = (reference_volume - dmin) * dscale
-    reference = reference.astype(np.uint16)
+    reference_volume = (reference_volume - dmin) * dscale
+    reference_volume = reference_volume.astype(np.uint16)
     return reference_volume, annotation_volume
 
 
