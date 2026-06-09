@@ -5,9 +5,9 @@ filling in the required functions and metadata.
 """
 
 import re
-import numpy as np
 from pathlib import Path
 
+import numpy as np
 import pooch
 from brainglobe_utils.IO.image import load_any
 
