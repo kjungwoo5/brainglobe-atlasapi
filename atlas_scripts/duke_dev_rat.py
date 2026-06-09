@@ -293,7 +293,7 @@ if __name__ == "__main__":
     structures = fetch_ontology(good_dog)
     for age in TIMEPOINTS:
         atlas_name = f"{ATLAS_NAME}_p{age}"
-        print("Packaging atlas for: ", atlas_name)
+        print("\nPackaging atlas for:", atlas_name)
         reference_volume, annotated_volume = fetch_animal(good_dog, age)
         hemispheres_stack = retrieve_hemisphere_map()
         meshes_dict, structures_with_mesh = retrieve_or_construct_meshes(
