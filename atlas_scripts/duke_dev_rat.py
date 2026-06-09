@@ -56,44 +56,45 @@ LABELS_FNAME = "Developmental_labels_lookup.txt"
 
 # As acronyms were not provided by the authors, acronyms are either taken from
 # George Paxinos and Charles Watson's The Rat Brain in stereotaxic coordinates
-# or, when missing, derived from the structure name.
+# or, when missing, derived from the structure name in accordance with the principles
+# laid out in https://brainmuseum.org/circuitry/nomenclature.html
 ACRONYMS = {
     # Included regions
     "Cingulum": "cg",
-    "Mesencephalon": None,
+    "Mesencephalon": "M", # derived
     "Substantia Nigra": "SN",
     "Anterior commisure": "ac",
-    "Axial Hindbrain": None,
-    "Septum": None,
-    "Diagonal Domain": None,
-    "Hypothalamus": None,
+    "Axial Hindbrain": "AxH", # derived
+    "Septum": "Sep", # derived
+    "Diagonal Domain": "DD", # derived
+    "Hypothalamus": "HT", # derived
     "Striatum": "CPu",
-    "Diencephalon": None,
+    "Diencephalon": "Di", # derived
     "Internal Capsule": "ic",
-    "Hippocampal Formation": None,
-    "Pallidum": None,
+    "Hippocampal Formation": "HF", # derived
+    "Pallidum": "Pld", # derived
     "Accumbens nucleus": "Acb",
     "Fimbria": "fi",
     "Corpus Callosum": "cc",
-    "Amygdala": None,
-    "Preoptic Area": None,
-    "Isocortex": None,
+    "Amygdala": "Amy", # derived
+    "Preoptic Area": "POA", # derived
+    "Isocortex": "Iso", # derived
     "Cerebellum": "Cb",
-    "Olfactory Structures": None,
+    "Olfactory Structures": "Olf", # derived
     "Bed nucleus of the Stria Terminalis": "BNST",
     "Pituitary": "Pit",
     "Ventricles": "V",
-    "Optic Pathways": None,
+    "Optic Pathways": "op", # derived
     "Pineal Gland": "Pi",
-    "Spinal Cord": None,
+    "Spinal Cord": "SC", # derived
     # Superstructures from publication
-    "Hindbrain": None,
-    "Forebrain": None,
-    "Telencephalon": None,
-    "Pallium": None,
-    "Subpallium": None,
-    "Developmentally diverse structures": None,
-    "Major white matter structures": None,
+    "Hindbrain": "H", # derived
+    "Forebrain": "F", # derived
+    "Telencephalon": "Tel", # derived
+    "Pallium": "Pal", # derived
+    "Subpallium": "SbPal", # derived
+    "Developmentally diverse structures": "DDS", # derived
+    "Major white matter structures": "WM", # derived
 }
 
 
@@ -342,7 +343,7 @@ if __name__ == "__main__":
         )
 
         output_filename = wrapup_atlas_from_data(
-            atlas_name=ATLAS_NAME,
+            atlas_name=f"{ATLAS_NAME}_p{age}",
             atlas_minor_version=__version__,
             citation=CITATION,
             atlas_link=ATLAS_LINK,
@@ -355,7 +356,7 @@ if __name__ == "__main__":
             structures_list=structures_with_mesh,
             meshes_dict=meshes_dict,
             working_dir=bg_root_dir,
-            hemispheres_stack=None,
+            hemispheres_stack=hemispheres_stack,
             cleanup_files=False,
             compress=True,
             scale_meshes=True,
