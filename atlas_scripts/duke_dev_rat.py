@@ -5,7 +5,6 @@ filling in the required functions and metadata.
 """
 
 import re
-import os
 from pathlib import Path
 
 import pooch
@@ -349,5 +348,5 @@ if __name__ == "__main__":
             compress=True,
             scale_meshes=True,
             additional_references=None,
-            atlas_packager=ATLAS_PACKAGER
+            atlas_packager=ATLAS_PACKAGER,
         )
