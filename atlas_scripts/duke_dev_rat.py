@@ -5,6 +5,7 @@ filling in the required functions and metadata.
 """
 
 import re
+import numpy as np
 from pathlib import Path
 
 import pooch
@@ -53,49 +54,6 @@ ANNOTATION_FNAMES = {
 }
 ANNOTATION_FNAMES["12"] = "pnd12_average_labels_fix.nii"
 LABELS_FNAME = "Developmental_labels_lookup.txt"
-
-# As acronyms were not provided by the authors, acronyms are either taken from
-# George Paxinos and Charles Watson's The Rat Brain in stereotaxic coordinates
-# or, when missing, derived from the structure name in accordance with the principles
-# laid out in https://brainmuseum.org/circuitry/nomenclature.html
-ACRONYMS = {
-    # Included regions
-    "Cingulum": "cg",
-    "Mesencephalon": "M",  # derived
-    "Substantia Nigra": "SN",
-    "Anterior commisure": "ac",
-    "Axial Hindbrain": "AxH",  # derived
-    "Septum": "Sep",  # derived
-    "Diagonal Domain": "DD",  # derived
-    "Hypothalamus": "HT",  # derived
-    "Striatum": "CPu",
-    "Diencephalon": "Di",  # derived
-    "Internal Capsule": "ic",
-    "Hippocampal Formation": "HF",  # derived
-    "Pallidum": "Pld",  # derived
-    "Accumbens nucleus": "Acb",
-    "Fimbria": "fi",
-    "Corpus Callosum": "cc",
-    "Amygdala": "Amy",  # derived
-    "Preoptic Area": "POA",  # derived
-    "Isocortex": "Iso",  # derived
-    "Cerebellum": "Cb",
-    "Olfactory Structures": "Olf",  # derived
-    "Bed nucleus of the Stria Terminalis": "BNST",
-    "Pituitary": "Pit",
-    "Ventricles": "V",
-    "Optic Pathways": "op",  # derived
-    "Pineal Gland": "Pi",
-    "Spinal Cord": "SC",  # derived
-    # Superstructures from publication
-    "Hindbrain": "H",  # derived
-    "Forebrain": "F",  # derived
-    "Telencephalon": "Tel",  # derived
-    "Pallium": "Pal",  # derived
-    "Subpallium": "SbPal",  # derived
-    "Developmentally diverse structures": "DDS",  # derived
-    "Major white matter structures": "WM",  # derived
-}
 
 
 def pooch_init(download_dir_path: Path, timepoints: list[str]) -> pooch.Pooch:
@@ -181,12 +139,12 @@ def fetch_animal(pooch_: pooch.Pooch, age: str):
 
     reference_volume = load_any(fetched_reference, as_numpy=True)
     annotation_volume = load_any(fetched_annotation, as_numpy=True)
-    """dmin = np.min(reference)
-    dmax = np.max(reference)
+    dmin = np.min(reference_volume)
+    dmax = np.max(reference_volume)
     drange = dmax - dmin
     dscale = (2**16 - 1) / drange
-    reference = (reference - dmin) * dscale
-    reference = reference.astype(np.uint16)"""
+    reference = (reference_volume - dmin) * dscale
+    reference = reference.astype(np.uint16)
     return reference_volume, annotation_volume
 
 
@@ -259,7 +217,7 @@ def fetch_ontology(pooch_: pooch.Pooch):
                 {
                     "id": id,
                     "name": name,
-                    "acronym": ACRONYMS.get(name, None),
+                    "acronym": name,
                     "structure_id_path": [ROOT_ID, id],
                     "rgb_triplet": rgb_colour,
                 }
