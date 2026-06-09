@@ -54,9 +54,9 @@ ANNOTATION_FNAMES = {
 ANNOTATION_FNAMES["12"] = "pnd12_average_labels_fix.nii"
 LABELS_FNAME = "Developmental_labels_lookup.txt"
 
-# As acronyms were not provided by the authors, acronyms are either taken from 
-# George Paxinos and Charles Watson's The Rat Brain in stereotaxic coordinates 
-# or, when missing, derived from the structure name. 
+# As acronyms were not provided by the authors, acronyms are either taken from
+# George Paxinos and Charles Watson's The Rat Brain in stereotaxic coordinates
+# or, when missing, derived from the structure name.
 ACRONYMS = {
     # Included regions
     "Cingulum": "cg",
@@ -86,14 +86,13 @@ ACRONYMS = {
     "Optic Pathways": None,
     "Pineal Gland": "Pi",
     "Spinal Cord": None,
-    
     # Superstructures from publication
-    "Hindbrain": None, 
-    "Forebrain": None, 
+    "Hindbrain": None,
+    "Forebrain": None,
     "Telencephalon": None,
-    "Pallium": None, 
+    "Pallium": None,
     "Subpallium": None,
-    "Developmentally diverse structures": None, 
+    "Developmentally diverse structures": None,
     "Major white matter structures": None,
 }
 
