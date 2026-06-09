@@ -61,40 +61,40 @@ LABELS_FNAME = "Developmental_labels_lookup.txt"
 ACRONYMS = {
     # Included regions
     "Cingulum": "cg",
-    "Mesencephalon": "M", # derived
+    "Mesencephalon": "M",  # derived
     "Substantia Nigra": "SN",
     "Anterior commisure": "ac",
-    "Axial Hindbrain": "AxH", # derived
-    "Septum": "Sep", # derived
-    "Diagonal Domain": "DD", # derived
-    "Hypothalamus": "HT", # derived
+    "Axial Hindbrain": "AxH",  # derived
+    "Septum": "Sep",  # derived
+    "Diagonal Domain": "DD",  # derived
+    "Hypothalamus": "HT",  # derived
     "Striatum": "CPu",
-    "Diencephalon": "Di", # derived
+    "Diencephalon": "Di",  # derived
     "Internal Capsule": "ic",
-    "Hippocampal Formation": "HF", # derived
-    "Pallidum": "Pld", # derived
+    "Hippocampal Formation": "HF",  # derived
+    "Pallidum": "Pld",  # derived
     "Accumbens nucleus": "Acb",
     "Fimbria": "fi",
     "Corpus Callosum": "cc",
-    "Amygdala": "Amy", # derived
-    "Preoptic Area": "POA", # derived
-    "Isocortex": "Iso", # derived
+    "Amygdala": "Amy",  # derived
+    "Preoptic Area": "POA",  # derived
+    "Isocortex": "Iso",  # derived
     "Cerebellum": "Cb",
-    "Olfactory Structures": "Olf", # derived
+    "Olfactory Structures": "Olf",  # derived
     "Bed nucleus of the Stria Terminalis": "BNST",
     "Pituitary": "Pit",
     "Ventricles": "V",
-    "Optic Pathways": "op", # derived
+    "Optic Pathways": "op",  # derived
     "Pineal Gland": "Pi",
-    "Spinal Cord": "SC", # derived
+    "Spinal Cord": "SC",  # derived
     # Superstructures from publication
-    "Hindbrain": "H", # derived
-    "Forebrain": "F", # derived
-    "Telencephalon": "Tel", # derived
-    "Pallium": "Pal", # derived
-    "Subpallium": "SbPal", # derived
-    "Developmentally diverse structures": "DDS", # derived
-    "Major white matter structures": "WM", # derived
+    "Hindbrain": "H",  # derived
+    "Forebrain": "F",  # derived
+    "Telencephalon": "Tel",  # derived
+    "Pallium": "Pal",  # derived
+    "Subpallium": "SbPal",  # derived
+    "Developmentally diverse structures": "DDS",  # derived
+    "Major white matter structures": "WM",  # derived
 }
 
 
