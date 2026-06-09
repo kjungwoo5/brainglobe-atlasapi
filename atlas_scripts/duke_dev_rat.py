@@ -34,7 +34,7 @@ SPECIES = "Rattus norvegicus"
 ATLAS_LINK = (
     "https://data-proxy.ebrains.eu/api/v1/buckets/duke-dev-rat-materials/"
 )
-ORIENTATION = "asr"
+ORIENTATION = "pri"
 
 ROOT_ID = 999
 RESOLUTION = 25
@@ -360,6 +360,5 @@ if __name__ == "__main__":
             cleanup_files=False,
             compress=True,
             scale_meshes=True,
-            additional_references=None,
             atlas_packager=ATLAS_PACKAGER,
         )
