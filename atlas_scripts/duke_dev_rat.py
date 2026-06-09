@@ -5,6 +5,7 @@ filling in the required functions and metadata.
 """
 
 import re
+import os
 from pathlib import Path
 
 import pooch
@@ -14,6 +15,7 @@ from brainglobe_atlasapi import utils
 from brainglobe_atlasapi.atlas_generation.mesh_utils import (
     construct_meshes_from_annotation,
 )
+from brainglobe_atlasapi.atlas_generation.wrapup import wrapup_atlas_from_data
 from brainglobe_atlasapi.utils import atlas_name_from_repr
 
 # Copy-paste this script into a new file and fill in the functions to package
@@ -31,7 +33,7 @@ ATLAS_NAME = "duke_dev_rat"
 CITATION = "https://doi.org/10.1016/j.neuroimage.2013.01.017"
 SPECIES = "Rattus norvegicus"
 ATLAS_LINK = (
-    "https://civmvoxport.vm.duke.edu/voxbase/studyhome.php?studyid=208"
+    "https://data-proxy.ebrains.eu/api/v1/buckets/duke-dev-rat-materials/"
 )
 ORIENTATION = "asr"
 
@@ -40,71 +42,6 @@ RESOLUTION = 25
 ATLAS_PACKAGER = "Jung Woo Kim"
 
 SKIP_DOWNLOADS_IF_PRESENT = True
-
-REFERENCE_URL = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22891"
-)
-ANNOTATION_URL = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22940"
-)
-LABELS_URL = "https://civmvoxport.vm.duke.edu/voxbase/get_attachment.php?attachmentID=402"
-
-ref00 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22945"
-)
-ref02 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22912"
-)
-ref04 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22909"
-)
-ref08 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22906"
-)
-ref12 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22903"
-)
-ref18 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22900"
-)
-ref24 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22897"
-)
-ref40 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22893"
-)
-ref80 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22891"
-)
-
-ann00 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22916"
-)
-ann02 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22919"
-)
-ann04 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22920"
-)
-ann08 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22925"
-)
-ann12 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=23604"
-)
-ann18 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22931"
-)
-ann24 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22934"
-)
-ann40 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22937"
-)
-ann80 = (
-    "https://civmvoxport.vm.duke.edu/voxbase/downloaddataset.php?stackID=22940"
-)
-
 
 BG_ROOT_DIR = Path.home() / "brainglobe_workingdir" / ATLAS_NAME
 DOWNLOAD_DIR_PATH = BG_ROOT_DIR / "downloads"
@@ -115,6 +52,7 @@ REFERENCE_FNAMES = {age: "p" + age + "_average_gre.nii" for age in TIMEPOINTS}
 ANNOTATION_FNAMES = {
     age: "pnd" + age + "_average_labels.nii" for age in TIMEPOINTS
 }
+ANNOTATION_FNAMES["12"] = "pnd12_average_labels_fix.nii"
 LABELS_FNAME = "Developmental_labels_lookup.txt"
 
 ACRONYMS = {
@@ -175,9 +113,10 @@ def pooch_init(download_dir_path: Path, timepoints: list[str]) -> pooch.Pooch:
 
     p = pooch.create(
         path=download_dir_path,
-        base_url="",
+        base_url=ATLAS_LINK,
         registry=empty_registry,
     )
+
     p.load_registry(Path(__file__).parent / "hashes" / (ATLAS_NAME + ".txt"))
     return p
 
@@ -383,13 +322,15 @@ if __name__ == "__main__":
     good_dog = pooch_init(DOWNLOAD_DIR_PATH, TIMEPOINTS)
     structures = fetch_ontology(good_dog)
     for age in TIMEPOINTS:
+        atlas_name = f"{ATLAS_NAME}_p{age}"
+        print("Packaging atlas for: ", atlas_name)
         reference_volume, annotated_volume = fetch_animal(good_dog, age)
         hemispheres_stack = retrieve_hemisphere_map()
-        meshes_dict = retrieve_or_construct_meshes(
+        meshes_dict, structures_with_mesh = retrieve_or_construct_meshes(
             annotated_volume, structures
         )
 
-        """output_filename = wrapup_atlas_from_data(
+        output_filename = wrapup_atlas_from_data(
             atlas_name=ATLAS_NAME,
             atlas_minor_version=__version__,
             citation=CITATION,
@@ -400,13 +341,13 @@ if __name__ == "__main__":
             root_id=ROOT_ID,
             reference_stack=reference_volume,
             annotation_stack=annotated_volume,
-            structures_list=structures,
+            structures_list=structures_with_mesh,
             meshes_dict=meshes_dict,
             working_dir=bg_root_dir,
             hemispheres_stack=None,
             cleanup_files=False,
             compress=True,
             scale_meshes=True,
-            additional_references=additional_references,
+            additional_references=None,
             atlas_packager=ATLAS_PACKAGER
-        )"""
+        )
